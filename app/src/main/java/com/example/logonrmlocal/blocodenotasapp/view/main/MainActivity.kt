@@ -1,7 +1,9 @@
 package com.example.logonrmlocal.blocodenotasapp.view.main
 
+import android.app.Activity
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -10,8 +12,10 @@ import android.view.Menu
 import android.view.MenuItem
 
 import android.view.View
+import android.widget.Toast
 import com.example.logonrmlocal.blocodenotasapp.R
 import com.example.logonrmlocal.blocodenotasapp.model.Nota
+import com.example.logonrmlocal.blocodenotasapp.view.formulario.FormularioActivity
 import com.example.logonrmlocal.blocodenotasapp.view.main.MainListAdapter
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -23,43 +27,48 @@ class MainActivity : AppCompatActivity() {
     lateinit var mainViewModel: MainViewModel
     private var adapter: MainListAdapter? = null
 
+    var FORMULARIO_REQUEST_CODE = 1
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
         mainViewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
-        mainViewModel.notas.observe(this,notasObserver)
-        mainViewModel.isLoading.observe(this,loadingObserver)
+        mainViewModel.notas.observe(this, notasObserver)
+        mainViewModel.isLoading.observe(this, loadingObserver)
 
         mainViewModel.buscarTodos()
 
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+
+            val formularioIntent = Intent(this, FormularioActivity::class.java)
+            startActivityForResult(formularioIntent, FORMULARIO_REQUEST_CODE)
         }
     }
 
-    private var notasObserver = Observer<List<Nota>>{
+    private var notasObserver = Observer<List<Nota>> {
         preencheALista(it!!)
     }
-    private var loadingObserver = Observer<Boolean>{
+    private var loadingObserver = Observer<Boolean> {
 
-        if( it == true){
+        if (it == true) {
             containerLoading.visibility = View.VISIBLE
-        }else{
+        } else {
             containerLoading.visibility = View.GONE
         }
     }
 
-    private fun preencheALista(notas: List<Nota>){
-        adapter = MainListAdapter(this,notas,{},{})
+    private fun preencheALista(notas: List<Nota>) {
+        adapter = MainListAdapter(this, notas, {}, {})
 
         rvNotas.adapter = adapter
         rvNotas.layoutManager = LinearLayoutManager(this)
     }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
@@ -70,9 +79,29 @@ class MainActivity : AppCompatActivity() {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         return when (item.itemId) {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            FORMULARIO_REQUEST_CODE -> {
+
+                when (resultCode) {
+                    Activity.RESULT_OK -> {
+                        mainViewModel.buscarTodos()
+                    }
+
+                    Activity.RESULT_CANCELED -> {
+                        Toast.makeText(this, "Cancelou", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
         }
     }
 }
